@@ -7,10 +7,10 @@ import random
 # Configure the setup
 PIXEL_PIN = board.A1  # pin that the NeoPixel is connected to
 ORDER = neopixel.RGB  # pixel color channel order
-GREEN = (0,255,0)  # color to blink
+GREEN = (0,255,0)  
 RED = (255,0,0)
 BLUE = (0,0,255)
-COLOR = (255,255,255)
+COLOR = (0,200,255)
 CLEAR = (0, 0, 0)  # clear (or second color)
 
 #sample buddy maps
@@ -117,23 +117,40 @@ CELLS = {'H01' : 0 ,
 # Create the NeoPixel object
 pixels = neopixel.NeoPixel(PIXEL_PIN, 96, brightness=1,  pixel_order=ORDER)
 
-
+#clears all the pixels
 def clear_pixels():
         for i in range(len(pixels)):
              pixels[i] = CLEAR
 
-
+#takes in the input and changes the LEDs accordingly
 def new_input(cmd):
         print(cmd)
-        clear_pixels()
-        well = CELLS.get(cmd)
-        if well is not None:
-            pixels[well] = BLUE
+        color_options = {"GREEN" : (0,255,0), "RED" : (255,0,0), "BLUE" : (0,0,255)}
+
+        if cmd == "CLEAR":
+            clear_pixels()
             return
         
-        if cmd == "ERROR":
-             for i in ERROR_SIGN:
-                  pixels[i] = RED
+        elif cmd == "ERROR":
+            for i in ERROR_SIGN:
+                pixels[i] = RED
+            return
+        
+        else:
+            try:
+                requested_well, clr = cmd.split(",",1)
+                print(requested_well)
+                
+                well = CELLS.get(requested_well)
+                cell_color = color_options.get(clr)
+                if well is not None:
+                    pixels[well] = cell_color
+                    return
+            except Exception as e:
+                print(f"Error: {e}")
+                clear_pixels()
+                return
+
         
 
 
@@ -147,12 +164,16 @@ delay = 10
 
 timer = monotonic()
 
+for i in range(len(pixels)):
+    pixels[i] = COLOR
+    sleep(0.05)
+    pixels[i] = CLEAR
 
 while True:
     #clears the LEDs after no input for delay amount of time
     if timer < monotonic():
-         clear_pixels()
-
+        clear_pixels()
+        timer = monotonic() + delay
     value = ''
     if supervisor.runtime.serial_bytes_available:
         value = input()
